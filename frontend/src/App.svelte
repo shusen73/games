@@ -1,7 +1,6 @@
 <script>
   import Board from "./components/Board.svelte";
   import Menu from "./components/Menu.svelte";
-  import VictoryModal from "./components/VictoryModal.svelte";
 
   import { userState } from "./lib/state.svelte";
 </script>

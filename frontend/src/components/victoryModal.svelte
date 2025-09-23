@@ -1,13 +1,14 @@
 <script>
-  import { userState } from "../lib/state.svelte";
-
-
-    let dialog
+  import { userState, restartGame, backToMenu } from "../lib/state.svelte";
+  let dialog;
 </script>
 
-<button on:click={() => dialog.showModal()}>Open It!</button>
-
-{#if userState.game.winner !== null}
-<dialog bind:this={dialog} on:close={() => console.log('closed')}>
-    This is amazingly simple! (press esc to close)
-</dialog>{/if}
+<dialog
+  open={!!userState.game.winner}
+  bind:this={dialog}
+  oncancel={(e) => e.preventDefault()}
+>
+  <h2>Player {userState.game.winner} wins!</h2>
+  <button onclick={restartGame}>Restart</button>
+  <button onclick={backToMenu}>Menu</button>
+</dialog>

@@ -1,5 +1,6 @@
 <script>
   import { userState, placeStone } from "../lib/state.svelte";
+  import VictoryModal from "./VictoryModal.svelte";
 </script>
 
 <div class="board" style={`--n:${userState.game.boardSize};`}>
@@ -7,11 +8,9 @@
     {#each row as cell, j}
       <button class="cell" onclick={() => placeStone(i, j)}>
         {#if userState.game.board[i][j] == "BLACK"}
-          <span class="stone black">black</span>
+          <span class="stone black"></span>
         {:else if userState.game.board[i][j] == "WHITE"}
-          <span class="stone white">white</span>
-        {:else}
-          <span class="stone white">null</span>
+          <span class="stone white"></span>
         {/if}
       </button>
     {/each}
@@ -20,6 +19,7 @@
 <div class="turn">
   Player {userState.game.currentPlayer} to move
 </div>
+<VictoryModal />
 
 <style>
   .board {
