@@ -35,9 +35,14 @@ func main() {
 
 	// SSE endpoint
 	r.GET("/status", func(c *gin.Context) {
+		if !strings.Contains(c.GetHeader("Accept"), "text/event-stream") {
+			c.Status(http.StatusNotAcceptable) // 406
+			return
+		}
 		// Set SSE headers
 		c.Writer.Header().Set("Content-Type", "text/event-stream")
-		c.Writer.Header().Set("Cache-Control", "no-cache")
+		c.Header("Cache-Control", "no-cache, no-transform") // no-transform prevents proxies from messing
+
 		c.Writer.Header().Set("Connection", "keep-alive")
 
 		flusher, ok := c.Writer.(http.Flusher)
@@ -47,7 +52,7 @@ func main() {
 		}
 
 		// Send status every 5 seconds
-		ticker := time.NewTicker(5 * time.Second)
+		ticker := time.NewTicker(1 * time.Minute)
 		defer ticker.Stop()
 
 		for {
