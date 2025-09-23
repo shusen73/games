@@ -1,18 +1,23 @@
 <script>
-  let serverStatus = $state("connecting…");
+  let serverStatus = $state("unknown");
+
+  async function checkHealth() {
+    try {
+      const res = await fetch("/healthz", { cache: "no-store" });
+      serverStatus = res.ok ? "online" : "offline";
+    } catch {
+      serverStatus = "offline";
+    }
+  }
 
   $effect(() => {
-    const es = new EventSource("/status");
+    checkHealth();
 
-    es.onmessage = (e) => {
-      serverStatus = e.data || "unknown";
-    };
+    // poll every 10 seconds
+    const id = setInterval(checkHealth, 10000);
 
-    es.onerror = () => {
-      serverStatus = "connection lost (retrying…)";
-    };
-
-    return () => es.close();
+    // cleanup when component is destroyed
+    return () => clearInterval(id);
   });
 </script>
 
