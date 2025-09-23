@@ -1,18 +1,18 @@
 <script>
-  import { onMount } from "svelte";
+  let serverStatus = $state("connecting…");
 
-  let backendOK = null;
+  $effect(() => {
+    const es = new EventSource("/status");
 
-  onMount(async () => {
-    try {
-      const ac = new AbortController();
-      const timeout = setTimeout(() => ac.abort(), 1500);
-      const res = await fetch("/healthz", { signal: ac.signal });
-      clearTimeout(timeout);
-      backendOK = res.ok;
-    } catch {
-      backendOK = false;
-    }
+    es.onmessage = (e) => {
+      serverStatus = e.data || "unknown";
+    };
+
+    es.onerror = () => {
+      serverStatus = "connection lost (retrying…)";
+    };
+
+    return () => es.close();
   });
 </script>
 
@@ -27,17 +27,8 @@
     <button class=""> Play Local </button>
     <button class=""> Play Online </button>
   </div>
-  <div class="message">
-    <div role="status" aria-live="polite" class="meta">
-      <span></span>
-      <span>
-        {backendOK === null
-          ? "Backend: unknown"
-          : backendOK
-            ? "Backend: reachable"
-            : "Backend: unreachable"}
-      </span>
-    </div>
+  <div class="message" role="status" aria-live="polite">
+    Server status: {serverStatus}
   </div>
 
   <footer></footer>

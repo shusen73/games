@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/fs"
 	"log"
@@ -30,6 +31,43 @@ func main() {
 	// --- Health endpoint -----------------------------------------------------
 	r.GET("/healthz", func(c *gin.Context) {
 		c.String(http.StatusOK, "ok")
+	})
+
+	// SSE endpoint
+	r.GET("/status", func(c *gin.Context) {
+		if !strings.Contains(c.GetHeader("Accept"), "text/event-stream") {
+			c.Status(http.StatusNotAcceptable) // 406
+			return
+		}
+		// Set SSE headers
+		c.Writer.Header().Set("Content-Type", "text/event-stream")
+		c.Header("Cache-Control", "no-cache, no-transform") // no-transform prevents proxies from messing
+
+		c.Writer.Header().Set("Connection", "keep-alive")
+
+		flusher, ok := c.Writer.(http.Flusher)
+		if !ok {
+			c.String(http.StatusInternalServerError, "streaming unsupported")
+			return
+		}
+
+		// Send status every 5 seconds
+		ticker := time.NewTicker(1 * time.Minute)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-c.Request.Context().Done():
+				// Client closed connection
+				log.Println("SSE client disconnected")
+				return
+			case t := <-ticker.C:
+				status := "online"
+				fmt.Fprintf(c.Writer, "data: %s\n\n", status)
+				flusher.Flush()
+				log.Printf("pushed status at %s", t.Format(time.RFC3339))
+			}
+		}
 	})
 
 	// (Optional) cache headers for immutable build assets
@@ -71,7 +109,7 @@ func main() {
 		Handler:           r,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
-		WriteTimeout:      15 * time.Second,
+		WriteTimeout:      0, // allow streaming
 		IdleTimeout:       60 * time.Second,
 	}
 
