@@ -71,7 +71,7 @@ func main() {
 		Handler:           r,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
-		WriteTimeout:      15 * time.Second,
+		WriteTimeout:      0, // allow streaming
 		IdleTimeout:       60 * time.Second,
 	}
 

@@ -1,18 +1,23 @@
 <script>
-  import { onMount } from "svelte";
+  let serverStatus = $state("unknown");
 
-  let backendOK = null;
-
-  onMount(async () => {
+  async function checkHealth() {
     try {
-      const ac = new AbortController();
-      const timeout = setTimeout(() => ac.abort(), 1500);
-      const res = await fetch("/healthz", { signal: ac.signal });
-      clearTimeout(timeout);
-      backendOK = res.ok;
+      const res = await fetch("/healthz", { cache: "no-store" });
+      serverStatus = res.ok ? "online" : "offline";
     } catch {
-      backendOK = false;
+      serverStatus = "offline";
     }
+  }
+
+  $effect(() => {
+    checkHealth();
+
+    // poll every 10 seconds
+    const id = setInterval(checkHealth, 10000);
+
+    // cleanup when component is destroyed
+    return () => clearInterval(id);
   });
 </script>
 
@@ -27,17 +32,8 @@
     <button class=""> Play Local </button>
     <button class=""> Play Online </button>
   </div>
-  <div class="message">
-    <div role="status" aria-live="polite" class="meta">
-      <span></span>
-      <span>
-        {backendOK === null
-          ? "Backend: unknown"
-          : backendOK
-            ? "Backend: reachable"
-            : "Backend: unreachable"}
-      </span>
-    </div>
+  <div class="message" role="status" aria-live="polite">
+    Server status: {serverStatus}
   </div>
 
   <footer></footer>
