@@ -1,40 +1,24 @@
 <script>
-  let serverStatus = $state("unknown");
+  import Board from "./components/Board.svelte";
+  import Menu from "./components/Menu.svelte";
+  import VictoryModal from "./components/VictoryModal.svelte";
 
-  async function checkHealth() {
-    try {
-      const res = await fetch("/healthz", { cache: "no-store" });
-      serverStatus = res.ok ? "online" : "offline";
-    } catch {
-      serverStatus = "offline";
-    }
-  }
-
-  $effect(() => {
-    checkHealth();
-
-    // poll every 10 seconds
-    const id = setInterval(checkHealth, 10000);
-
-    // cleanup when component is destroyed
-    return () => clearInterval(id);
-  });
+  import { userState } from "./lib/state.svelte";
 </script>
 
 <main class="">
   <div class="gameName">
     <h1>Connect 5</h1>
-    <div class="gameDescription">
-      <p class="">Five-in-a-row, simple & fast.</p>
-    </div>
+    <div class="gameDescription"></div>
   </div>
-  <div class="gameArea">
-    <button class=""> Play Local </button>
-    <button class=""> Play Online </button>
-  </div>
-  <div class="message" role="status" aria-live="polite">
-    Server status: {serverStatus}
-  </div>
+
+  {#if userState.view === "menu"}
+    <Menu />
+  {:else if userState.view === "local"}
+    <Board />
+  {:else if userState.view === "online"}
+    <Board />
+  {/if}
 
   <footer></footer>
 </main>
